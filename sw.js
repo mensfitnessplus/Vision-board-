@@ -1,12 +1,21 @@
 // ---------- Vision Board Service Worker ----------
-// Bump CACHE_VERSION any time you change cached files (index.html, css, js, icons, etc).
-// On activate, any cache whose name doesn't match the current version is deleted automatically.
+// Two separate caches:
+//   vision-board-app-vX   -> app shell (html, css, js, manifest, icons) — versioned
+//   vision-board-images   -> remote/uploaded images (Unsplash, ImgBB, etc.) — NOT versioned
+//
+// HOW TO UPDATE THE APP (e.g. after pushing changes to GitHub):
+//   1. Bump CACHE_VERSION below (e.g. 'v1' -> 'v2').
+//   2. Push/deploy. On next load, the new SW installs, precaches fresh files
+//      under the new cache name, and activate() deletes the old app-cache
+//      version automatically. The image cache is left untouched, so cached
+//      photos survive app updates.
 
-const CACHE_VERSION = 'v1'; // <-- bump this number to force an update and clear old caches
-const CACHE_NAME = `vision-board-${CACHE_VERSION}`;
+const CACHE_VERSION = 'v1.1'; // <-- bump this on every deploy that changes app files
+const APP_CACHE_NAME = `vision-board-app-${CACHE_VERSION}`;
+const IMAGE_CACHE_NAME = 'vision-board-images';
 
-// Files to cache for offline use. Update this list if you add more assets.
-const PRECACHE_URLS = [
+// App shell files to precache. Adjust paths as needed for your deployment.
+const APP_SHELL_FILES = [
   './',
   './index.html',
   './manifest.json',
@@ -15,45 +24,110 @@ const PRECACHE_URLS = [
   './icon-maskable-512.png'
 ];
 
-// ---------- Install: cache app shell ----------
+// Hosts whose responses should be routed into the image cache.
+const IMAGE_HOSTS = [
+  'images.unsplash.com',
+  'i.ibb.co',
+  'ibb.co',
+  'image.ibb.co'
+];
+
+function isImageRequest(request, url) {
+  if (request.destination === 'image') return true;
+  if (IMAGE_HOSTS.some(host => url.hostname.includes(host))) return true;
+  if (/\.(png|jpe?g|gif|webp|svg|avif)$/i.test(url.pathname)) return true;
+  return false;
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting()) // activate new SW immediately, don't wait for old tabs to close
-  );
-});
-
-// ---------- Activate: delete any caches that aren't the current version ----------
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.open(APP_CACHE_NAME).then((cache) => {
       return Promise.all(
-        cacheNames
-          .filter((name) => name.startsWith('vision-board-') && name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
+        APP_SHELL_FILES.map((file) =>
+          cache.add(file).catch((err) => {
+            // Don't fail install if an optional shell file is missing
+            console.warn('[sw] Could not precache', file, err);
+          })
+        )
       );
-    }).then(() => self.clients.claim()) // take control of open pages right away
-  );
-});
-
-// ---------- Fetch: cache-first, falling back to network, then updating cache ----------
-self.addEventListener('fetch', (event) => {
-  // Only handle GET requests; let everything else (POST, etc.) pass through untouched.
-  if (event.request.method !== 'GET') return;
-
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      // Serve from cache if we have it, but still fetch in the background to keep it fresh.
-      const networkFetch = fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
-        }
-        return networkResponse;
-      }).catch(() => cachedResponse); // offline and not cached: nothing we can do
-
-      return cachedResponse || networkFetch;
     })
   );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          // Delete any old vision-board-app-* cache that isn't the current version.
+          // Never touch vision-board-images — that persists across app updates.
+          .filter((key) => key.startsWith('vision-board-app-') && key !== APP_CACHE_NAME)
+          .map((key) => caches.delete(key))
+      )
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  const request = event.request;
+  if (request.method !== 'GET') return;
+
+  let url;
+  try {
+    url = new URL(request.url);
+  } catch (e) {
+    return;
+  }
+
+  // Only handle http/https requests
+  if (!url.protocol.startsWith('http')) return;
+
+  if (isImageRequest(request, url)) {
+    event.respondWith(handleImageRequest(request));
+  } else if (url.origin === self.location.origin) {
+    event.respondWith(handleAppRequest(request));
+  }
+  // Cross-origin, non-image requests (e.g. API calls) are left to the network.
+});
+
+async function handleImageRequest(request) {
+  const cache = await caches.open(IMAGE_CACHE_NAME);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+
+  try {
+    const response = await fetch(request);
+    if (response && response.status === 200) {
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (err) {
+    // Offline and not cached — let it fail gracefully.
+    return cached || Response.error();
+  }
+}
+
+async function handleAppRequest(request) {
+  const cache = await caches.open(APP_CACHE_NAME);
+  const cached = await cache.match(request);
+
+  try {
+    const response = await fetch(request);
+    if (response && response.status === 200) {
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (err) {
+    if (cached) return cached;
+    throw err;
+  }
+}
+
+// Allow the page to request an immediate activation (e.g. after an update).
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

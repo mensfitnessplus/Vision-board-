@@ -135,7 +135,6 @@
     background: var(--tag-bg); color: var(--tag-text); font-size: 13px; font-weight: 600;
     cursor: pointer; border: 1px solid transparent; white-space: nowrap; transition: all 0.15s ease;
     display: flex; align-items: center; user-select: none;
-    /* Touch actions to allow long press without triggering context menu on mobile */
     -webkit-user-select: none; -webkit-touch-callout: none;
   }
   .tag-chip.active { background: var(--accent); color: #fff; }
@@ -161,7 +160,7 @@
     box-shadow: var(--shadow);
     cursor: pointer;
     transition: box-shadow 0.2s ease, transform 0.15s ease;
-    aspect-ratio: 1; /* Request 2: Square */
+    aspect-ratio: 1; 
   }
   .card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
   .card img {
@@ -228,9 +227,10 @@
   .bulk-bar .count-text { font-size: 14px; font-weight: 700; }
   .bulk-bar .count-text span { color: var(--accent); }
   .bulk-bar .actions { display: flex; gap: 10px; }
-  .btn { padding: 10px 18px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-weight: 700; font-size: 13px; cursor: pointer; }
+  .btn { padding: 10px 18px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-weight: 700; font-size: 13px; cursor: pointer; transition: opacity 0.2s; }
   .btn.delete { background: #E0355B; border-color: #E0355B; color: #fff; }
   .btn.ghost { background: transparent; }
+  .btn:disabled { opacity: 0.5; pointer-events: none; cursor: not-allowed; }
 
   /* ---------- Scroll Mode (Reels View) ---------- */
   .reel-overlay {
@@ -279,9 +279,11 @@
   .field label { display: block; font-size: 12.5px; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em; }
   .field input[type="text"] { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; outline: none; }
   .field input[type="text"]:focus { border-color: var(--accent); }
-  .preview-box { width: 100%; border-radius: 14px; overflow: hidden; background: var(--tag-bg); min-height: 80px; display: flex; align-items: center; justify-content: center; }
+  
+  .preview-box { width: 100%; border-radius: 14px; overflow: hidden; background: var(--tag-bg); min-height: 80px; display: flex; align-items: center; justify-content: center; border: 2px dashed transparent; transition: border-color 0.2s ease, background 0.2s ease; }
+  .preview-box.drag-over { border-color: var(--accent); background: var(--accent-soft); }
   .preview-box img { width: 100%; max-height: 280px; object-fit: contain; display: block; }
-  .preview-box .ph { color: var(--text-dim); font-size: 13px; padding: 30px; text-align: center; }
+  .preview-box .ph { color: var(--text-dim); font-size: 13px; padding: 30px; text-align: center; pointer-events: none; }
 
   .tag-input-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); }
   .tag-pill { display: flex; align-items: center; gap: 5px; background: var(--accent-soft); color: var(--accent); font-size: 12.5px; font-weight: 700; padding: 5px 8px 5px 10px; border-radius: 14px; }
@@ -294,9 +296,34 @@
   .modal-footer .btn { flex: 1; padding: 13px 0; text-align: center; }
   .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
   .err-text { color: #d6385f; font-size: 12px; margin-top: 4px; display: none; }
+  
+  .status-text { margin-top: 8px; font-size: 13px; font-weight: 600; text-align: center; display: none; }
+  .status-text.uploading { color: var(--text-dim); display: block; }
+  .status-text.success { color: #2e8b57; display: block; }
+  .status-text.error { color: #d6385f; display: block; }
+  [data-theme="dark"] .status-text.success { color: #4ade80; }
 
   .toast { position: fixed; bottom: 96px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text); color: var(--bg); padding: 11px 20px; border-radius: 24px; font-size: 13px; font-weight: 600; opacity: 0; transition: all 0.25s ease; z-index: 200; pointer-events: none; white-space: nowrap; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ---------- Storage Manager ---------- */
+  .storage-stats { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 14px; background: var(--bg); border: 1px solid var(--border); }
+  .storage-row { display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+  .storage-row .label { color: var(--text-dim); font-weight: 600; }
+  .storage-row .value { font-weight: 700; }
+  .storage-bar-track { width: 100%; height: 8px; border-radius: 6px; background: var(--tag-bg); overflow: hidden; margin: 2px 0 4px; }
+  .storage-bar-fill { height: 100%; background: var(--accent); border-radius: 6px; transition: width 0.3s ease; }
+  .storage-divider { border: 0; border-top: 1px solid var(--border); margin: 4px 0; }
+  .storage-loading { font-size: 12.5px; color: var(--text-dim); text-align: center; padding: 6px 0; }
+  .storage-warning { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-size: 13px; font-weight: 600; }
+  .storage-warning.severe { background: #FCE0E0; color: #C4274B; }
+  [data-theme="dark"] .storage-warning.severe { background: #3A2020; color: #FF8A8A; }
+  .storage-actions-row { display: flex; gap: 8px; }
+  .storage-actions-row .btn { flex: 1; padding: 10px 0; }
+  .confirm-box { background: var(--tag-bg); border-radius: 12px; padding: 12px 14px; font-size: 12.5px; color: var(--text-dim); display: none; flex-direction: column; gap: 10px; }
+  .confirm-box.show { display: flex; }
+  .confirm-box .confirm-actions { display: flex; gap: 8px; }
+  .confirm-box .confirm-actions .btn { flex: 1; padding: 8px 0; font-size: 12.5px; }
 </style>
 </head>
 <body data-theme="light">
@@ -350,7 +377,6 @@
   </div>
 </div>
 
-<!-- Add/Edit Modal -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <div class="modal-header">
@@ -361,8 +387,16 @@
     </div>
     <div class="modal-body">
       <div class="field">
-        <label>Image URL</label>
+        <label>Add Image</label>
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+          <button class="btn ghost" id="uploadImgBtn" style="flex: 1; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px;">📁 Upload Image</button>
+          <button class="btn ghost" id="pasteImgBtn" style="flex: 1; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px;">📋 Paste Image</button>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+        
+        <div style="font-size: 12.5px; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em;">Or Paste URL</div>
         <input type="text" id="urlInput" placeholder="https://example.com/image.jpg">
+        <div id="uploadStatus" class="status-text"></div>
         <div class="err-text" id="urlErr">Couldn't load that image — check the link.</div>
       </div>
       <div class="preview-box" id="previewBox"><div class="ph">Image preview appears here</div></div>
@@ -381,7 +415,6 @@
   </div>
 </div>
 
-<!-- Settings Modal -->
 <div class="modal-bg" id="settingsModal">
   <div class="modal">
     <div class="modal-header">
@@ -392,21 +425,59 @@
     </div>
     <div class="modal-body" style="gap: 12px;">
       <p style="font-size: 13px; color: var(--text-dim); margin-top: 0;">Manage your Vision Board data stored securely in your browser.</p>
+      
       <button class="btn ghost" id="exportBtn" style="border: 1px solid var(--border); text-align: left;">📥 Export & Backup Data</button>
       <button class="btn ghost" id="importBtn" style="border: 1px solid var(--border); text-align: left;">📤 Import Data</button>
-      <button class="btn delete" id="resetBtn" style="text-align: left; margin-top: 8px;">🗑️ Reset All App Data</button>
       <input type="file" id="importFile" accept=".json" style="display:none;">
+
+      <hr style="border: 0; border-top: 1px solid var(--border); margin: 6px 0 16px;">
+
+      <h3 style="margin: 0 0 6px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-dim);">Storage Manager</h3>
+
+      <div id="storageWarningBox"></div>
+
+      <div class="storage-stats" id="storageStatsBox">
+        <div class="storage-loading" id="storageLoadingMsg">Calculating storage usage…</div>
+      </div>
+
+      <button class="btn ghost" id="refreshStorageBtn" style="border: 1px solid var(--border);">🔄 Refresh Storage Stats</button>
+
+      <div class="storage-actions-row">
+        <button class="btn ghost" id="clearImageCacheBtn" style="border: 1px solid var(--border);">🖼️ Clear Image Cache</button>
+        <button class="btn ghost" id="clearAppCacheBtn" style="border: 1px solid var(--border);">📦 Clear App Cache</button>
+      </div>
+      <button class="btn ghost" id="clearAllCacheBtn" style="border: 1px solid var(--border);">🧹 Clear All Cache</button>
+
+      <div class="confirm-box" id="cacheConfirmBox">
+        <span id="cacheConfirmText"></span>
+        <div class="confirm-actions">
+          <button class="btn ghost" id="cacheConfirmCancel" style="border: 1px solid var(--border);">Cancel</button>
+          <button class="btn delete" id="cacheConfirmOk">Clear</button>
+        </div>
+      </div>
+
+      <button class="btn delete" id="resetBtn" style="text-align: left; margin-top: 4px;">⚠️ Factory Reset</button>
+
+      <hr style="border: 0; border-top: 1px solid var(--border); margin: 6px 0 16px;">
+      
+      <h3 style="margin: 0 0 6px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-dim);">Image Hosting (ImgBB)</h3>
+      <div class="field">
+        <input type="text" id="imgbbKeyInput" placeholder="Enter ImgBB API Key">
+      </div>
+      <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+        <button class="btn primary" id="imgbbSaveBtn" style="flex: 1; padding: 10px;">Save</button>
+        <button class="btn ghost" id="imgbbTestBtn" style="flex: 1; padding: 10px; border: 1px solid var(--border);">Test</button>
+        <button class="btn delete" id="imgbbClearBtn" style="flex: 1; padding: 10px;">Clear</button>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Scroll Mode (Reels View) -->
 <div class="reel-overlay" id="reelOverlay">
   <div class="reel-header"><button class="reel-close" id="reelClose">&times;</button></div>
   <div class="reel-container" id="reelContainer"></div>
 </div>
 
-<!-- Lightbox Modal -->
 <div class="modal-bg" id="lightboxBg">
   <div class="modal" style="max-width: 800px; background: transparent; box-shadow: none;">
     <div style="background: var(--surface); border-radius: 16px; overflow: hidden; position: relative;">
@@ -441,7 +512,7 @@
   let currentTags = [];
   let searchTerm = '';
 
-  // ---------- IndexedDB Persistence (Request 5) ----------
+  // ---------- IndexedDB Persistence ----------
   function initDB() {
     return new Promise((resolve, reject) => {
       const req = indexedDB.open(DB_NAME, 1);
@@ -540,7 +611,6 @@
     });
     bar.innerHTML = html;
 
-    // Attach events for long press & clicks (Request 1)
     bar.querySelectorAll('.tag-chip').forEach(chip => {
       let pressTimer;
       let isLongPress = false;
@@ -548,13 +618,13 @@
       const clearPress = () => clearTimeout(pressTimer);
 
       chip.addEventListener('pointerdown', (e) => {
-        if(e.button !== 0 && e.pointerType === 'mouse') return; // only primary click
+        if(e.button !== 0 && e.pointerType === 'mouse') return;
         isLongPress = false;
         pressTimer = setTimeout(() => {
           isLongPress = true;
           const t = chip.getAttribute('data-tag');
           if (t !== '') triggerTagDeletePrompt(t);
-        }, 600); // 600ms long press
+        }, 600);
       });
 
       chip.addEventListener('pointerup', clearPress);
@@ -706,7 +776,7 @@
   document.getElementById('lbDeleteBtn').addEventListener('click', () => { deleteSingle(lbCurrentId); document.getElementById('lightboxBg').classList.remove('show'); });
 
 
-  // ---------- Scroll Mode (Reels) (Request 3) ----------
+  // ---------- Scroll Mode (Reels) ----------
   function openReelMode() {
     const list = getFiltered();
     if (list.length === 0) { showToast('No images to show'); return; }
@@ -725,7 +795,7 @@
   document.getElementById('reelBtn').addEventListener('click', openReelMode);
   document.getElementById('reelClose').addEventListener('click', () => document.getElementById('reelOverlay').classList.remove('show'));
 
-  // ---------- Swiping between tags (Request 4) ----------
+  // ---------- Swiping between tags ----------
   let touchStartX = 0;
   let touchStartY = 0;
 
@@ -735,7 +805,6 @@
   }, {passive: true});
 
   document.addEventListener('touchend', e => {
-    // Disable swiping tags if any overlay is active
     if (document.getElementById('modalBg').classList.contains('show') || 
         document.getElementById('lightboxBg').classList.contains('show') || 
         document.getElementById('reelOverlay').classList.contains('show') || 
@@ -746,9 +815,8 @@
     const dx = touchEndX - touchStartX;
     const dy = touchEndY - touchStartY;
 
-    // Detect horizontal swipe
     if (Math.abs(dx) > 70 && Math.abs(dy) < 50) {
-      handleTagSwipe(dx < 0 ? 1 : -1); // left swipe means next tag (+1)
+      handleTagSwipe(dx < 0 ? 1 : -1);
     }
   }, {passive: true});
 
@@ -763,7 +831,6 @@
     const nextTag = tagsList[nextIdx];
     activeTagFilter = nextTag === '' ? null : nextTag;
     
-    // Scroll tagbar so the active tag is somewhat visible
     const chip = document.querySelector(`.tag-chip[data-tag="${escapeAttr(nextTag)}"]`);
     if(chip) chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 
@@ -802,18 +869,146 @@
     render();
   });
 
+  // ---------- Image Upload Handlers ----------
+  const fileInput = document.getElementById('fileInput');
+  const uploadStatus = document.getElementById('uploadStatus');
+
+  async function handleFileSelection(file) {
+    if (!file || !file.type.startsWith('image/')) {
+      showToast('Please select a valid image file');
+      return;
+    }
+
+    const apiKey = localStorage.getItem('imgbb_api_key');
+    if (!apiKey) {
+      showToast("Please configure your ImgBB API key in Settings");
+      return;
+    }
+
+    const saveBtn = document.getElementById('saveBtn');
+    
+    saveBtn.disabled = true;
+    urlErr.style.display = 'none';
+    uploadStatus.className = 'status-text uploading';
+    uploadStatus.textContent = 'Uploading image...';
+
+    try {
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const fd = new FormData();
+      fd.append('key', apiKey);
+      fd.append('image', base64);
+
+      const res = await fetch('https://api.imgbb.com/1/upload', {
+        method: 'POST',
+        body: fd
+      });
+      const json = await res.json();
+
+      if (!json.success) throw new Error(json.error?.message || "Upload failed");
+
+      urlInput.value = json.data.url;
+      renderPreview(json.data.url);
+
+      uploadStatus.className = 'status-text success';
+      uploadStatus.textContent = 'Upload complete ✓';
+
+    } catch (err) {
+      uploadStatus.className = 'status-text error';
+      uploadStatus.textContent = 'Upload failed. Please try again.';
+      console.error('ImgBB Upload Error:', err);
+    } finally {
+      saveBtn.disabled = false;
+    }
+  }
+
+  // File picker binding
+  document.getElementById('uploadImgBtn').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) handleFileSelection(e.target.files[0]);
+    e.target.value = ''; // Reset
+  });
+
+  // Global Paste Listener (Fallback & Desktop)
+  document.addEventListener('paste', e => {
+    if (!document.getElementById('modalBg').classList.contains('show')) return;
+    
+    // Ignore text inputs if they aren't pasting files
+    if (e.target.tagName === 'INPUT' && (!e.clipboardData.files || e.clipboardData.files.length === 0)) return;
+
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        handleFileSelection(item.getAsFile());
+        return;
+      }
+    }
+  });
+
+  // Paste Button logic
+  document.getElementById('pasteImgBtn').addEventListener('click', async () => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.read) {
+        const items = await navigator.clipboard.read();
+        let found = false;
+        for (let item of items) {
+          for (let type of item.types) {
+            if (type.startsWith('image/')) {
+              const blob = await item.getType(type);
+              handleFileSelection(blob);
+              found = true;
+              break;
+            }
+          }
+          if (found) break;
+        }
+        if (!found) showToast("Clipboard does not contain an image");
+      } else {
+        showToast("Press Ctrl+V / Cmd+V to paste your image");
+      }
+    } catch (err) {
+      showToast("Please use Ctrl+V / Cmd+V to paste");
+    }
+  });
+
+  // Drag & Drop
+  const previewBox = document.getElementById('previewBox');
+  previewBox.addEventListener('dragover', e => {
+    e.preventDefault();
+    previewBox.classList.add('drag-over');
+  });
+  previewBox.addEventListener('dragleave', e => {
+    previewBox.classList.remove('drag-over');
+  });
+  previewBox.addEventListener('drop', e => {
+    e.preventDefault();
+    previewBox.classList.remove('drag-over');
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileSelection(e.dataTransfer.files[0]);
+    }
+  });
+
+
   // ---------- Modal: add/edit ----------
   const modalBg = document.getElementById('modalBg');
   const urlInput = document.getElementById('urlInput');
   const tagInput = document.getElementById('tagInput');
   const tagInputRow = document.getElementById('tagInputRow');
-  const previewBox = document.getElementById('previewBox');
   const urlErr = document.getElementById('urlErr');
 
   function openAddModal() {
     editingId = null; currentTags = []; urlInput.value = '';
     document.getElementById('modalTitle').textContent = 'Add a pin';
     document.getElementById('saveBtn').textContent = 'Save Pin';
+    document.getElementById('saveBtn').disabled = false;
+    uploadStatus.className = 'status-text'; // reset state
     renderTagInputs(); renderPreview(''); renderSuggestChips();
     modalBg.classList.add('show');
     setTimeout(()=>urlInput.focus(), 50);
@@ -825,11 +1020,13 @@
     editingId = id; currentTags = p.tags.slice(); urlInput.value = p.url;
     document.getElementById('modalTitle').textContent = 'Edit pin';
     document.getElementById('saveBtn').textContent = 'Save Changes';
+    document.getElementById('saveBtn').disabled = false;
+    uploadStatus.className = 'status-text'; // reset state
     renderTagInputs(); renderPreview(p.url); renderSuggestChips();
     modalBg.classList.add('show');
   }
 
-  function closeModal() { modalBg.classList.remove('show'); urlErr.style.display = 'none'; }
+  function closeModal() { modalBg.classList.remove('show'); urlErr.style.display = 'none'; uploadStatus.className = 'status-text'; }
 
   document.getElementById('addBtn').addEventListener('click', openAddModal);
   document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
@@ -838,11 +1035,12 @@
 
   urlInput.addEventListener('input', () => {
     urlErr.style.display = 'none';
+    uploadStatus.className = 'status-text';
     renderPreview(urlInput.value.trim());
   });
 
   function renderPreview(url) {
-    if (!url) { previewBox.innerHTML = '<div class="ph">Image preview appears here</div>'; return; }
+    if (!url) { previewBox.innerHTML = '<div class="ph">Drag & drop an image here or paste preview</div>'; return; }
     previewBox.innerHTML = `<img src="${escapeAttr(url)}" onerror="this.parentElement.innerHTML='<div class=&quot;ph&quot;>Couldn\'t load preview — check the URL</div>'">`;
   }
 
@@ -885,7 +1083,7 @@
   document.getElementById('saveBtn').addEventListener('click', () => {
     addTagFromInput();
     const url = urlInput.value.trim();
-    if (!url) { urlErr.textContent = 'Please paste an image URL.'; urlErr.style.display = 'block'; urlInput.focus(); return; }
+    if (!url) { urlErr.textContent = 'Please paste an image URL or upload an image.'; urlErr.style.display = 'block'; urlInput.focus(); return; }
     if (currentTags.length === 0) currentTags.push('untagged');
     
     if (editingId) {
@@ -899,11 +1097,52 @@
     saveDB(); closeModal(); render();
   });
 
-  // ---------- Settings Modal (Request 6) ----------
+  // ---------- Settings Modal & ImgBB Config ----------
   const settingsModal = document.getElementById('settingsModal');
-  document.getElementById('settingsBtn').addEventListener('click', () => settingsModal.classList.add('show'));
+  
+  document.getElementById('settingsBtn').addEventListener('click', () => {
+    document.getElementById('imgbbKeyInput').value = localStorage.getItem('imgbb_api_key') || '';
+    settingsModal.classList.add('show');
+    refreshStorageStats();
+  });
+  
   document.getElementById('settingsCloseBtn').addEventListener('click', () => settingsModal.classList.remove('show'));
   settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) settingsModal.classList.remove('show'); });
+
+  // Save/Clear/Test ImgBB API Key
+  document.getElementById('imgbbSaveBtn').addEventListener('click', () => {
+    const key = document.getElementById('imgbbKeyInput').value.trim();
+    if (key) {
+      localStorage.setItem('imgbb_api_key', key);
+      showToast('API Key saved');
+    }
+  });
+
+  document.getElementById('imgbbClearBtn').addEventListener('click', () => {
+    localStorage.removeItem('imgbb_api_key');
+    document.getElementById('imgbbKeyInput').value = '';
+    showToast('API Key cleared');
+  });
+
+  document.getElementById('imgbbTestBtn').addEventListener('click', async () => {
+    const apiKey = document.getElementById('imgbbKeyInput').value.trim();
+    if (!apiKey) return showToast('Enter an API key first');
+    
+    // 1x1 transparent GIF base64 string for lightweight validation test
+    const testBase64 = "R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="; 
+    const fd = new FormData();
+    fd.append('key', apiKey);
+    fd.append('image', testBase64);
+    
+    try {
+      const res = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: fd });
+      const json = await res.json();
+      if (json.success) showToast('Connected ✓');
+      else showToast('Invalid API Key');
+    } catch (e) {
+      showToast('Connection failed');
+    }
+  });
 
   // Export
   document.getElementById('exportBtn').addEventListener('click', () => {
@@ -936,16 +1175,219 @@
     e.target.value = ''; // Reset input
   });
 
-  // Reset Data
+  // Factory Reset (everything: pins, IndexedDB, settings, all caches)
   document.getElementById('resetBtn').addEventListener('click', () => {
-    if(confirm("Are you ABSOLUTELY sure you want to delete all your pins?\nThis action cannot be undone.")) {
-      pins = [];
-      saveDB(); render();
-      settingsModal.classList.remove('show');
-      showToast('App data reset');
+    if(confirm("Factory Reset: this will permanently delete ALL pins, settings, and cached data.\nThis action cannot be undone. Continue?")) {
+      (async () => {
+        pins = [];
+        await saveDB();
+        localStorage.removeItem('imgbb_api_key');
+        localStorage.removeItem(THEME_KEY);
+        if ('caches' in window) {
+          try {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+          } catch (e) { console.warn('Cache clear failed', e); }
+        }
+        render();
+        settingsModal.classList.remove('show');
+        showToast('Factory reset complete');
+      })();
     }
   });
 
+
+  // ---------- Storage Manager ----------
+  // The app cache name is versioned by the service worker (vision-board-app-vX),
+  // so we discover it dynamically rather than hardcoding a version here.
+  const APP_CACHE_PREFIX = 'vision-board-app-';
+  const IMAGE_CACHE_NAME = 'vision-board-images';
+  const WARN_MB = 100;
+  const LARGE_MB = 500;
+
+  async function getCurrentAppCacheName() {
+    if (!('caches' in window)) return null;
+    try {
+      const keys = await caches.keys();
+      const appKeys = keys.filter(k => k.startsWith(APP_CACHE_PREFIX));
+      // If multiple versions exist momentarily (e.g. mid-update), use the most recent.
+      return appKeys.length ? appKeys[appKeys.length - 1] : null;
+    } catch (e) { return null; }
+  }
+
+  function formatBytes(bytes) {
+    if (!bytes || bytes <= 0) return '0 KB';
+    const kb = bytes / 1024;
+    if (kb < 1024) return kb.toFixed(1) + ' KB';
+    const mb = kb / 1024;
+    if (mb < 1024) return mb.toFixed(1) + ' MB';
+    const gb = mb / 1024;
+    return gb.toFixed(2) + ' GB';
+  }
+
+  async function analyzeCache(cacheName) {
+    let fileCount = 0, totalSize = 0, largest = 0, sizes = [];
+    if (!('caches' in window)) return { fileCount, totalSize, largest, sizes };
+    try {
+      const exists = await caches.has ? await caches.has(cacheName) : true;
+      const cache = await caches.open(cacheName);
+      const requests = await cache.keys();
+      for (const req of requests) {
+        try {
+          const response = await cache.match(req);
+          if (!response) continue;
+          const blob = await response.blob();
+          totalSize += blob.size;
+          sizes.push(blob.size);
+          if (blob.size > largest) largest = blob.size;
+          fileCount++;
+        } catch (e) { /* skip unreadable entry */ }
+      }
+    } catch (e) {
+      console.warn('Cache analysis failed for', cacheName, e);
+    }
+    return { fileCount, totalSize, largest, sizes };
+  }
+
+  async function refreshStorageStats() {
+    const box = document.getElementById('storageStatsBox');
+    box.innerHTML = '<div class="storage-loading" id="storageLoadingMsg">Calculating storage usage…</div>';
+    document.getElementById('storageWarningBox').innerHTML = '';
+
+    // Pin count
+    const pinCount = pins.length;
+
+    // IndexedDB estimate: serialize pins to approximate stored size
+    let idbBytes = 0;
+    try { idbBytes = new Blob([JSON.stringify(pins)]).size; } catch (e) { idbBytes = 0; }
+
+    // Image cache analysis
+    const imgStats = await analyzeCache(IMAGE_CACHE_NAME);
+    // App cache analysis (resolve actual versioned cache name first)
+    const appCacheName = await getCurrentAppCacheName();
+    const appStats = appCacheName ? await analyzeCache(appCacheName) : { fileCount: 0, totalSize: 0, largest: 0, sizes: [] };
+
+    const totalCacheBytes = imgStats.totalSize + appStats.totalSize;
+    const avgImageSize = imgStats.fileCount > 0 ? imgStats.totalSize / imgStats.fileCount : 0;
+
+    // navigator.storage.estimate()
+    let usage = idbBytes + totalCacheBytes, quota = 0;
+    if (navigator.storage && navigator.storage.estimate) {
+      try {
+        const est = await navigator.storage.estimate();
+        if (typeof est.usage === 'number') usage = est.usage;
+        if (typeof est.quota === 'number') quota = est.quota;
+      } catch (e) { console.warn('storage.estimate failed', e); }
+    }
+
+    const totalUsed = idbBytes + totalCacheBytes;
+    const pct = quota > 0 ? Math.min(100, (usage / quota) * 100) : 0;
+
+    box.innerHTML = `
+      <div class="storage-row"><span class="label">Pins</span><span class="value">${pinCount}</span></div>
+      <hr class="storage-divider">
+      <div class="storage-row"><span class="label">IndexedDB</span><span class="value">${formatBytes(idbBytes)}</span></div>
+      <div class="storage-row"><span class="label">App Cache</span><span class="value">${formatBytes(appStats.totalSize)}</span></div>
+      <div class="storage-row"><span class="label">Image Cache</span><span class="value">${formatBytes(imgStats.totalSize)}</span></div>
+      <div class="storage-row"><span class="label">Total Used</span><span class="value">${formatBytes(totalUsed)}</span></div>
+      <hr class="storage-divider">
+      <div class="storage-row"><span class="label">Cached Images</span><span class="value">${imgStats.fileCount}</span></div>
+      <div class="storage-row"><span class="label">Largest Cached Image</span><span class="value">${formatBytes(imgStats.largest)}</span></div>
+      <div class="storage-row"><span class="label">Average Image Size</span><span class="value">${formatBytes(avgImageSize)}</span></div>
+      <hr class="storage-divider">
+      <div class="storage-row"><span class="label">Browser Storage Quota</span><span class="value">${quota > 0 ? formatBytes(quota) : 'Unknown'}</span></div>
+      ${quota > 0 ? `
+        <div class="storage-bar-track"><div class="storage-bar-fill" style="width:${pct}%"></div></div>
+        <div class="storage-row"><span class="label">Available Space</span><span class="value">${formatBytes(Math.max(0, quota - usage))}</span></div>
+      ` : ''}
+    `;
+
+    // Auto warnings
+    const imgMB = imgStats.totalSize / (1024 * 1024);
+    const warnBox = document.getElementById('storageWarningBox');
+    if (imgMB >= LARGE_MB) {
+      warnBox.innerHTML = `
+        <div class="storage-warning severe">
+          <span>⚠️ Large Cache Detected</span>
+          <span style="font-weight:500;">Consider clearing old cached images.</span>
+        </div>`;
+    } else if (imgMB >= WARN_MB) {
+      warnBox.innerHTML = `
+        <div class="storage-warning">
+          <span>⚠️ Storage Warning</span>
+          <span style="font-weight:500;">Your image cache is using ${formatBytes(imgStats.totalSize)}.</span>
+        </div>`;
+    }
+  }
+
+  document.getElementById('refreshStorageBtn').addEventListener('click', () => {
+    refreshStorageStats();
+    showToast('Storage stats refreshed');
+  });
+
+  // ---------- Cache clearing with confirmation ----------
+  const confirmBox = document.getElementById('cacheConfirmBox');
+  const confirmText = document.getElementById('cacheConfirmText');
+  const confirmOkBtn = document.getElementById('cacheConfirmOk');
+  let pendingClearAction = null;
+
+  function showCacheConfirm(message, action) {
+    confirmText.textContent = message;
+    pendingClearAction = action;
+    confirmBox.classList.add('show');
+  }
+
+  document.getElementById('cacheConfirmCancel').addEventListener('click', () => {
+    confirmBox.classList.remove('show');
+    pendingClearAction = null;
+  });
+
+  confirmOkBtn.addEventListener('click', async () => {
+    confirmBox.classList.remove('show');
+    if (pendingClearAction) await pendingClearAction();
+    pendingClearAction = null;
+  });
+
+  async function clearImageCache() {
+    if ('caches' in window) {
+      try { await caches.delete(IMAGE_CACHE_NAME); } catch (e) { console.warn(e); }
+    }
+    showToast('Image cache cleared');
+    refreshStorageStats();
+  }
+
+  async function clearAppCache() {
+    if ('caches' in window) {
+      try {
+        const appCacheName = await getCurrentAppCacheName();
+        if (appCacheName) await caches.delete(appCacheName);
+      } catch (e) { console.warn(e); }
+    }
+    showToast('App cache cleared');
+    refreshStorageStats();
+  }
+
+  async function clearAllCache() {
+    if ('caches' in window) {
+      try {
+        await caches.delete(IMAGE_CACHE_NAME);
+        const appCacheName = await getCurrentAppCacheName();
+        if (appCacheName) await caches.delete(appCacheName);
+      } catch (e) { console.warn(e); }
+    }
+    showToast('All cache cleared');
+    refreshStorageStats();
+  }
+
+  document.getElementById('clearImageCacheBtn').addEventListener('click', () => {
+    showCacheConfirm('This will remove offline copies of images. Your pins will remain safe.', clearImageCache);
+  });
+  document.getElementById('clearAppCacheBtn').addEventListener('click', () => {
+    showCacheConfirm('This will remove cached app files (HTML, CSS, JS, icons). They will redownload next time you\'re online. Your pins and images remain safe.', clearAppCache);
+  });
+  document.getElementById('clearAllCacheBtn').addEventListener('click', () => {
+    showCacheConfirm('This will remove all cached app files and offline images. Your pins, IndexedDB, and settings will remain safe.', clearAllCache);
+  });
 
   // ---------- Toast ----------
   let toastTimer = null;
@@ -975,8 +1417,6 @@
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js')
         .then((reg) => {
-          // Check for an updated service worker whenever the page loads,
-          // so a new CACHE_VERSION in sw.js gets picked up promptly.
           reg.update();
         })
         .catch((err) => console.warn('Service worker registration failed:', err));
