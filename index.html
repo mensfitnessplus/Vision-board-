@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Vision Board</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#E0356B">
+<link rel="icon" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<style>
+  :root {
+    --bg: #FAF8F6;
+    --surface: #FFFFFF;
+    --text: #211922;
+    --text-dim: #6B6470;
+    --border: rgba(33,25,34,0.08);
+    --accent: #E0356B;
+    --accent-soft: #FCE4EC;
+    --tag-bg: #F1ECEE;
+    --tag-text: #4A3F47;
+    --shadow: 0 1px 3px rgba(33,25,34,0.08), 0 8px 24px rgba(33,25,34,0.06);
+    --shadow-hover: 0 4px 8px rgba(33,25,34,0.10), 0 16px 32px rgba(33,25,34,0.12);
+    --overlay-grad: linear-gradient(180deg, rgba(20,14,18,0) 0%, rgba(20,14,18,0.55) 100%);
+    --fab-shadow: 0 6px 16px rgba(224,53,107,0.35), 0 2px 6px rgba(224,53,107,0.25);
+  }
+  [data-theme="dark"] {
+    --bg: #15111A;
+    --surface: #1F1A24;
+    --text: #F3EEF2;
+    --text-dim: #A79DAE;
+    --border: rgba(255,255,255,0.08);
+    --accent: #FF5D8F;
+    --accent-soft: #3A2230;
+    --tag-bg: #2B2530;
+    --tag-text: #D9CEDB;
+    --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.4);
+    --shadow-hover: 0 4px 10px rgba(0,0,0,0.5), 0 18px 36px rgba(0,0,0,0.5);
+    --overlay-grad: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.65) 100%);
+    --fab-shadow: 0 6px 18px rgba(255,93,143,0.3), 0 2px 8px rgba(255,93,143,0.25);
+  }
+
+  * { box-sizing: border-box; }
+  
+  html, body {
+    margin: 0; padding: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(8px);
+  }
+  .brand {
+    display: flex; align-items: center; gap: 8px;
+    font-weight: 800;
+    font-size: 19px;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .brand .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+    flex-shrink: 0;
+  }
+  .search-wrap { flex: 1; min-width: 0; position: relative; }
+  .search-wrap input {
+    width: 100%;
+    padding: 9px 10px 9px 34px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+  }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--text-dim); }
+  
+  .header-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .icon-btn {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text);
+    transition: transform 0.15s ease, background 0.15s ease;
+    flex-shrink: 0;
+  }
+  .icon-btn:hover { background: var(--tag-bg); transform: scale(1.05); }
+  .icon-btn svg { width: 16px; height: 16px; }
+  .select-btn { border-radius: 18px; padding: 0 12px; width: auto; font-size: 12.5px; font-weight: 600; gap: 5px; }
+  .select-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* On narrow phones, drop the brand label so icons have room to fit */
+  @media (max-width: 420px) {
+    .brand span:not(.dot) { display: none; }
+    .brand { gap: 0; }
+  }
+
+  /* ---------- Tag filter bar & Scroll ---------- */
+  .tagbar-wrap {
+    display: flex; align-items: center;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .scroll-btn {
+    background: transparent; border: none; font-size: 18px; cursor: pointer; color: var(--text-dim);
+    padding: 14px 16px; transition: color 0.2s;
+  }
+  .scroll-btn:hover { color: var(--text); }
+  .tagbar {
+    display: flex; gap: 8px; padding: 14px 0; overflow-x: auto; scrollbar-width: none; scroll-behavior: smooth; flex: 1;
+  }
+  .tagbar::-webkit-scrollbar { display: none; }
+  
+  .tag-chip {
+    flex-shrink: 0; padding: 7px 14px; border-radius: 18px;
+    background: var(--tag-bg); color: var(--tag-text); font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 1px solid transparent; white-space: nowrap; transition: all 0.15s ease;
+    display: flex; align-items: center; user-select: none;
+    /* Touch actions to allow long press without triggering context menu on mobile */
+    -webkit-user-select: none; -webkit-touch-callout: none;
+  }
+  .tag-chip.active { background: var(--accent); color: #fff; }
+  .tag-chip .count { opacity: 0.65; font-weight: 500; margin-left: 4px; pointer-events: none;}
+
+  /* ---------- Square Grid ---------- */
+  .board { padding: 20px 16px 120px; max-width: 1400px; margin: 0 auto; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+  @media (min-width: 560px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 820px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+  @media (min-width: 1100px) { .grid { grid-template-columns: repeat(5, 1fr); } }
+  @media (min-width: 1300px) { .grid { grid-template-columns: repeat(6, 1fr); } }
+
+  .card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: box-shadow 0.2s ease, transform 0.15s ease;
+    aspect-ratio: 1; /* Request 2: Square */
+  }
+  .card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+  .card img {
+    width: 100%; height: 100%;
+    display: block;
+    object-fit: cover;
+    background: var(--tag-bg);
+  }
+  .card .img-fallback {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--tag-bg); color: var(--text-dim); font-size: 12px; text-align: center; padding: 16px;
+  }
+  .card .overlay {
+    position: absolute; inset: 0; background: var(--overlay-grad); opacity: 0; transition: opacity 0.2s ease;
+    display: flex; flex-direction: column; justify-content: space-between; padding: 10px;
+  }
+  .card:hover .overlay, .card.selected .overlay { opacity: 1; }
+  .card.selected { outline: 3px solid var(--accent); outline-offset: -3px; }
+
+  .overlay-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .check-circle { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; background: rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .check-circle.checked { background: var(--accent); border-color: var(--accent); }
+  .check-circle svg { width: 14px; height: 14px; color: #fff; opacity: 0; }
+  .check-circle.checked svg { opacity: 1; }
+
+  .pin-btn { width: 30px; height: 30px; border-radius: 50%; border: none; background: rgba(255,255,255,0.92); color: #b8244f; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .pin-btn.pinned { background: var(--accent); color: #fff; }
+  .pin-btn svg { width: 15px; height: 15px; }
+
+  .overlay-bottom { display: flex; flex-direction: column; gap: 6px; }
+  .overlay-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+  .overlay-tag { background: rgba(255,255,255,0.92); color: #211922; font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 12px; }
+  .overlay-actions { display: flex; gap: 6px; }
+  .ov-btn { flex: 1; background: rgba(255,255,255,0.92); border: none; border-radius: 10px; padding: 7px 0; font-size: 12px; font-weight: 700; color: #211922; cursor: pointer; }
+  .ov-btn.danger { color: #c4274b; }
+
+  .pin-flag { position: absolute; top: 8px; left: 8px; background: var(--accent); color: #fff; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.25); z-index: 1; }
+  .pin-flag svg { width: 13px; height: 13px; }
+  .card:hover .pin-flag { opacity: 0; }
+
+  /* ---------- Empty state ---------- */
+  .empty { text-align: center; padding: 100px 24px; color: var(--text-dim); }
+  .empty .big-emoji { font-size: 44px; margin-bottom: 10px; }
+  .empty h3 { color: var(--text); margin: 0 0 6px; font-size: 18px; }
+  .empty p { margin: 0; font-size: 14px; }
+
+  /* ---------- FAB ---------- */
+  .fab {
+    position: fixed; bottom: 26px; right: 26px; width: 58px; height: 58px; border-radius: 50%;
+    background: var(--accent); color: #fff; border: none; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; box-shadow: var(--fab-shadow); z-index: 60; transition: transform 0.15s ease;
+  }
+  .fab:hover { transform: scale(1.07) rotate(90deg); }
+  .fab svg { width: 26px; height: 26px; }
+
+  /* ---------- Bulk action bar ---------- */
+  .bulk-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border);
+    padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; z-index: 55;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.08); transform: translateY(110%); transition: transform 0.25s ease;
+  }
+  .bulk-bar.show { transform: translateY(0); }
+  .bulk-bar .count-text { font-size: 14px; font-weight: 700; }
+  .bulk-bar .count-text span { color: var(--accent); }
+  .bulk-bar .actions { display: flex; gap: 10px; }
+  .btn { padding: 10px 18px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-weight: 700; font-size: 13px; cursor: pointer; }
+  .btn.delete { background: #E0355B; border-color: #E0355B; color: #fff; }
+  .btn.ghost { background: transparent; }
+
+  /* ---------- Scroll Mode (Reels View) ---------- */
+  .reel-overlay {
+    position: fixed; inset: 0; background: #050505; z-index: 100;
+    display: none; flex-direction: column;
+  }
+  .reel-overlay.show { display: flex; }
+  .reel-header {
+    position: absolute; top: 0; left: 0; right: 0; padding: 20px; z-index: 101;
+    display: flex; justify-content: flex-end; background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 100%);
+  }
+  .reel-close {
+    background: rgba(255,255,255,0.2); border: none; color: #fff; width: 40px; height: 40px;
+    border-radius: 50%; font-size: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .reel-container {
+    flex: 1; overflow-y: scroll; scroll-snap-type: y mandatory; display: flex; flex-direction: column;
+    scrollbar-width: none;
+  }
+  .reel-container::-webkit-scrollbar { display: none; }
+  .reel-item {
+    height: 100vh; width: 100vw; scroll-snap-align: start; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; position: relative;
+  }
+  .reel-item img {
+    max-width: 100%; max-height: 100%; object-fit: contain;
+  }
+  .reel-tags {
+    position: absolute; bottom: 30px; left: 20px; right: 20px; display: flex; gap: 8px; flex-wrap: wrap; z-index: 2;
+  }
+
+  /* ---------- Modal ---------- */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(15,10,15,0.7); backdrop-filter: blur(5px); z-index: 100;
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-bg.show { display: flex; }
+  .modal { background: var(--surface); border-radius: 22px; width: 100%; max-width: 420px; max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: pop 0.18s ease; }
+  @keyframes pop { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 8px; }
+  .modal-header h2 { margin: 0; font-size: 18px; font-weight: 800; }
+  .modal-close { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--tag-bg); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .modal-close svg { width: 15px; height: 15px; }
+  .modal-body { padding: 14px 20px 20px; display: flex; flex-direction: column; gap: 16px; }
+  
+  .field label { display: block; font-size: 12.5px; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .field input[type="text"] { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; outline: none; }
+  .field input[type="text"]:focus { border-color: var(--accent); }
+  .preview-box { width: 100%; border-radius: 14px; overflow: hidden; background: var(--tag-bg); min-height: 80px; display: flex; align-items: center; justify-content: center; }
+  .preview-box img { width: 100%; max-height: 280px; object-fit: contain; display: block; }
+  .preview-box .ph { color: var(--text-dim); font-size: 13px; padding: 30px; text-align: center; }
+
+  .tag-input-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); }
+  .tag-pill { display: flex; align-items: center; gap: 5px; background: var(--accent-soft); color: var(--accent); font-size: 12.5px; font-weight: 700; padding: 5px 8px 5px 10px; border-radius: 14px; }
+  .tag-pill button { border: none; background: none; color: var(--accent); cursor: pointer; display: flex; padding: 0; }
+  .tag-pill button svg { width: 12px; height: 12px; }
+  .tag-input-row input { flex: 1; min-width: 80px; border: none; outline: none; background: transparent; color: var(--text); font-size: 13.5px; padding: 5px 4px; }
+  .suggest-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .suggest-chip { font-size: 11.5px; font-weight: 600; padding: 5px 10px; border-radius: 12px; background: var(--tag-bg); color: var(--tag-text); cursor: pointer; }
+  .modal-footer { display: flex; gap: 10px; padding: 4px 20px 22px; }
+  .modal-footer .btn { flex: 1; padding: 13px 0; text-align: center; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .err-text { color: #d6385f; font-size: 12px; margin-top: 4px; display: none; }
+
+  .toast { position: fixed; bottom: 96px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text); color: var(--bg); padding: 11px 20px; border-radius: 24px; font-size: 13px; font-weight: 600; opacity: 0; transition: all 0.25s ease; z-index: 200; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body data-theme="light">
+
+<header>
+  <div class="brand"><span class="dot"></span><span>Vision Board</span></div>
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    <input id="searchInput" type="text" placeholder="Search by tag or url...">
+  </div>
+  <div class="header-actions">
+    <button class="icon-btn select-btn" id="selectModeBtn" title="Select">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    </button>
+    <button class="icon-btn" id="reelBtn" title="Scroll Mode">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+    </button>
+    <button class="icon-btn" id="settingsBtn" title="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+    <button class="icon-btn" id="themeBtn" title="Toggle theme">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="tagbar-wrap">
+  <button class="scroll-btn" id="scrollLeftBtn">&#10094;</button>
+  <div class="tagbar" id="tagbar"></div>
+  <button class="scroll-btn" id="scrollRightBtn">&#10095;</button>
+</div>
+
+<div class="board">
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="emptyState" style="display:none;">
+    <div class="big-emoji">🪄</div>
+    <h3>Your board is empty</h3>
+    <p>Tap the + button to pin your first image.</p>
+  </div>
+</div>
+
+<button class="fab" id="addBtn">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<div class="bulk-bar" id="bulkBar">
+  <div class="count-text"><span id="bulkCount">0</span> selected</div>
+  <div class="actions">
+    <button class="btn ghost" id="bulkCancel">Cancel</button>
+    <button class="btn delete" id="bulkDelete">Delete</button>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Add a pin</h2>
+      <button class="modal-close" id="modalCloseBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Image URL</label>
+        <input type="text" id="urlInput" placeholder="https://example.com/image.jpg">
+        <div class="err-text" id="urlErr">Couldn't load that image — check the link.</div>
+      </div>
+      <div class="preview-box" id="previewBox"><div class="ph">Image preview appears here</div></div>
+      <div class="field">
+        <label>Tags</label>
+        <div class="tag-input-row" id="tagInputRow">
+          <input type="text" id="tagInput" placeholder="Type a tag and press Enter">
+        </div>
+        <div class="suggest-row" id="suggestRow"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn ghost" id="cancelBtn">Cancel</button>
+      <button class="btn primary" id="saveBtn">Save Pin</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-bg" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>App Settings</h2>
+      <button class="modal-close" id="settingsCloseBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="gap: 12px;">
+      <p style="font-size: 13px; color: var(--text-dim); margin-top: 0;">Manage your Vision Board data stored securely in your browser.</p>
+      <button class="btn ghost" id="exportBtn" style="border: 1px solid var(--border); text-align: left;">📥 Export & Backup Data</button>
+      <button class="btn ghost" id="importBtn" style="border: 1px solid var(--border); text-align: left;">📤 Import Data</button>
+      <button class="btn delete" id="resetBtn" style="text-align: left; margin-top: 8px;">🗑️ Reset All App Data</button>
+      <input type="file" id="importFile" accept=".json" style="display:none;">
+    </div>
+  </div>
+</div>
+
+<!-- Scroll Mode (Reels View) -->
+<div class="reel-overlay" id="reelOverlay">
+  <div class="reel-header"><button class="reel-close" id="reelClose">&times;</button></div>
+  <div class="reel-container" id="reelContainer"></div>
+</div>
+
+<!-- Lightbox Modal -->
+<div class="modal-bg" id="lightboxBg">
+  <div class="modal" style="max-width: 800px; background: transparent; box-shadow: none;">
+    <div style="background: var(--surface); border-radius: 16px; overflow: hidden; position: relative;">
+       <button class="modal-close" id="lbCloseBtn" style="position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.6); color: #fff; z-index: 10;">
+         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+       </button>
+       <img id="lbImg" src="" style="width: 100%; max-height: 75vh; object-fit: contain; display: block; background: var(--bg);" />
+      <div style="padding: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div id="lbTags" class="overlay-tags"></div>
+        <div class="overlay-actions" style="display: flex; gap: 8px;">
+          <button class="btn ghost" id="lbPinBtn">Pin</button>
+          <button class="btn ghost" id="lbEditBtn">Edit</button>
+          <button class="btn delete" id="lbDeleteBtn">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(async function(){
+  const THEME_KEY = 'visionboard_theme_v1';
+  const DB_NAME = 'VisionBoardDB';
+  let db;
+  let pins = [];
+  let activeTagFilter = null;
+  let selectMode = false;
+  let selectedIds = new Set();
+  let editingId = null;
+  let currentTags = [];
+  let searchTerm = '';
+
+  // ---------- IndexedDB Persistence (Request 5) ----------
+  function initDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = e => {
+        const database = e.target.result;
+        if(!database.objectStoreNames.contains('pins')) {
+          database.createObjectStore('pins', {keyPath: 'id'});
+        }
+      };
+      req.onsuccess = e => { db = e.target.result; resolve(); };
+      req.onerror = e => { console.error('IndexedDB error', e); reject(e); };
+    });
+  }
+
+  function loadDB() {
+    return new Promise((resolve) => {
+      const tx = db.transaction('pins', 'readonly');
+      const store = tx.objectStore('pins');
+      const req = store.getAll();
+      req.onsuccess = e => {
+        pins = e.target.result || [];
+        if(pins.length === 0) {
+          pins = seedData();
+          saveDB(); // seed default
+        }
+        resolve();
+      };
+    });
+  }
+
+  function saveDB() {
+    return new Promise((resolve) => {
+      const tx = db.transaction('pins', 'readwrite');
+      const store = tx.objectStore('pins');
+      store.clear();
+      pins.forEach(p => store.put(p));
+      tx.oncomplete = () => resolve();
+    });
+  }
+
+  function seedData() {
+    return [
+      { id: cid(), url: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600', tags: ['workout','motivation'], pinned: true, createdAt: Date.now()-50000 },
+      { id: cid(), url: 'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=600', tags: ['workout'], pinned: false, createdAt: Date.now()-40000 },
+      { id: cid(), url: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=600', tags: ['quotes','calm'], pinned: false, createdAt: Date.now()-30000 },
+      { id: cid(), url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600', tags: ['travel','goals'], pinned: false, createdAt: Date.now()-20000 },
+    ];
+  }
+  function cid() { return 'p_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
+
+  // ---------- Theme ----------
+  function initTheme() {
+    const saved = localStorage.getItem(THEME_KEY) || 'light';
+    document.body.setAttribute('data-theme', saved);
+    updateThemeIcon(saved);
+  }
+  function updateThemeIcon(theme) {
+    const icon = document.getElementById('themeIcon');
+    if (theme === 'dark') {
+      icon.innerHTML = '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>';
+    } else {
+      icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+    }
+  }
+  document.getElementById('themeBtn').addEventListener('click', () => {
+    const cur = document.body.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.body.setAttribute('data-theme', next);
+    localStorage.setItem(THEME_KEY, next);
+    updateThemeIcon(next);
+  });
+
+  // ---------- Tag bar & Scrolling ----------
+  document.getElementById('scrollLeftBtn').addEventListener('click', () => {
+    document.getElementById('tagbar').scrollBy({ left: -150, behavior: 'smooth' });
+  });
+  document.getElementById('scrollRightBtn').addEventListener('click', () => {
+    document.getElementById('tagbar').scrollBy({ left: 150, behavior: 'smooth' });
+  });
+
+  function allTags() {
+    const map = {};
+    pins.forEach(p => p.tags.forEach(t => { map[t] = (map[t]||0)+1; }));
+    return Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  }
+
+  function renderTagbar() {
+    const bar = document.getElementById('tagbar');
+    const tags = allTags();
+    let html = `<div class="tag-chip ${activeTagFilter===null?'active':''}" data-tag="">All<span class="count">${pins.length}</span></div>`;
+    
+    tags.forEach(([t,c]) => {
+      html += `<div class="tag-chip ${activeTagFilter===t?'active':''}" data-tag="${escapeAttr(t)}">
+        ${escapeHtml(t)}<span class="count">${c}</span>
+      </div>`;
+    });
+    bar.innerHTML = html;
+
+    // Attach events for long press & clicks (Request 1)
+    bar.querySelectorAll('.tag-chip').forEach(chip => {
+      let pressTimer;
+      let isLongPress = false;
+
+      const clearPress = () => clearTimeout(pressTimer);
+
+      chip.addEventListener('pointerdown', (e) => {
+        if(e.button !== 0 && e.pointerType === 'mouse') return; // only primary click
+        isLongPress = false;
+        pressTimer = setTimeout(() => {
+          isLongPress = true;
+          const t = chip.getAttribute('data-tag');
+          if (t !== '') triggerTagDeletePrompt(t);
+        }, 600); // 600ms long press
+      });
+
+      chip.addEventListener('pointerup', clearPress);
+      chip.addEventListener('pointerleave', clearPress);
+      chip.addEventListener('pointercancel', clearPress);
+
+      chip.addEventListener('click', (e) => {
+        if(isLongPress) { e.preventDefault(); return; }
+        const t = chip.getAttribute('data-tag');
+        activeTagFilter = t === '' ? null : t;
+        render();
+      });
+    });
+  }
+
+  function triggerTagDeletePrompt(t) {
+    if (!confirm(`Delete the tag "${t}"? Images with this tag will be marked as 'untagged' if they have no other tags.`)) return;
+
+    pins = pins.filter(p => {
+      if (p.tags.includes(t)) {
+        p.tags = p.tags.filter(tag => tag !== t);
+        if (p.tags.length === 0) p.tags.push('untagged');
+      }
+      return true;
+    });
+    
+    if (activeTagFilter === t) activeTagFilter = null;
+    saveDB(); render(); showToast('Tag deleted');
+  }
+
+  // ---------- Grid render ----------
+  function getFiltered() {
+    let list = pins.slice();
+    if (activeTagFilter) list = list.filter(p => p.tags.includes(activeTagFilter));
+    if (searchTerm) {
+      const s = searchTerm.toLowerCase();
+      list = list.filter(p => p.tags.some(t=>t.toLowerCase().includes(s)) || p.url.toLowerCase().includes(s));
+    }
+    list.sort((a,b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return b.createdAt - a.createdAt;
+    });
+    return list;
+  }
+
+  function render() {
+    renderTagbar();
+    const list = getFiltered();
+    const grid = document.getElementById('grid');
+    const empty = document.getElementById('emptyState');
+    if (list.length === 0) {
+      grid.innerHTML = '';
+      empty.style.display = 'block';
+    } else {
+      empty.style.display = 'none';
+      grid.innerHTML = list.map(cardHtml).join('');
+    }
+    attachCardEvents();
+    updateBulkBar();
+  }
+
+  function cardHtml(p) {
+    const isSel = selectedIds.has(p.id);
+    const tagsHtml = p.tags.slice(0,3).map(t => `<span class="overlay-tag">${escapeHtml(t)}</span>`).join('');
+    return `
+      <div class="card ${isSel?'selected':''}" data-id="${p.id}">
+        ${p.pinned ? `<div class="pin-flag"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 3l5 5-5 5v3l-5 5-1-1v-6l-6-6 1-1h6l5-5z" stroke="currentColor" stroke-width="0.5" fill="currentColor"/></svg></div>` : ''}
+        <img src="${escapeAttr(p.url)}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" alt="pin">
+        <div class="img-fallback" style="display:none;">Image unavailable</div>
+        <div class="overlay">
+          <div class="overlay-top">
+            <div class="check-circle ${isSel?'checked':''}" data-action="select">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+            </div>
+            <button class="pin-btn ${p.pinned?'pinned':''}" data-action="pin" title="Pin to top">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
+            </button>
+          </div>
+          <div class="overlay-bottom">
+            <div class="overlay-tags">${tagsHtml}</div>
+            <div class="overlay-actions">
+              <button class="ov-btn" data-action="edit">Edit</button>
+              <button class="ov-btn danger" data-action="delete">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function attachCardEvents() {
+    document.querySelectorAll('.card').forEach(card => {
+      const id = card.getAttribute('data-id');
+      card.addEventListener('click', (e) => {
+        const actionEl = e.target.closest('[data-action]');
+        if (actionEl) {
+          e.stopPropagation();
+          const action = actionEl.getAttribute('data-action');
+          if (action === 'select') toggleSelect(id);
+          else if (action === 'pin') togglePin(id);
+          else if (action === 'edit') openEditModal(id);
+          else if (action === 'delete') deleteSingle(id);
+          return;
+        }
+        if (selectMode) toggleSelect(id);
+        else openLightbox(id);
+      });
+    });
+  }
+
+  function toggleSelect(id) {
+    if (selectedIds.has(id)) selectedIds.delete(id);
+    else selectedIds.add(id);
+    if (!selectMode && selectedIds.size > 0) enterSelectMode(false);
+    render();
+  }
+
+  function togglePin(id) {
+    const p = pins.find(x => x.id === id);
+    if (p) { p.pinned = !p.pinned; saveDB(); render(); showToast(p.pinned ? 'Pinned to top' : 'Unpinned'); }
+  }
+
+  function deleteSingle(id) {
+    if (!confirm('Delete this pin? This cannot be undone.')) return;
+    pins = pins.filter(p => p.id !== id);
+    selectedIds.delete(id);
+    saveDB(); render(); showToast('Pin deleted');
+  }
+
+  // ---------- Lightbox Feature ----------
+  let lbCurrentId = null;
+
+  function openLightbox(id) {
+    const p = pins.find(x => x.id === id);
+    if (!p) return;
+    lbCurrentId = id;
+    document.getElementById('lbImg').src = p.url;
+    document.getElementById('lbTags').innerHTML = p.tags.map(t => `<span class="overlay-tag" style="background: var(--tag-bg); color: var(--text); padding: 5px 12px; font-size: 12px;">${escapeHtml(t)}</span>`).join('');
+    document.getElementById('lbPinBtn').textContent = p.pinned ? 'Unpin' : 'Pin';
+    document.getElementById('lightboxBg').classList.add('show');
+  }
+
+  document.getElementById('lbCloseBtn').addEventListener('click', () => document.getElementById('lightboxBg').classList.remove('show'));
+  document.getElementById('lightboxBg').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('lightboxBg')) document.getElementById('lightboxBg').classList.remove('show');
+  });
+
+  document.getElementById('lbPinBtn').addEventListener('click', () => { togglePin(lbCurrentId); openLightbox(lbCurrentId); });
+  document.getElementById('lbEditBtn').addEventListener('click', () => { document.getElementById('lightboxBg').classList.remove('show'); openEditModal(lbCurrentId); });
+  document.getElementById('lbDeleteBtn').addEventListener('click', () => { deleteSingle(lbCurrentId); document.getElementById('lightboxBg').classList.remove('show'); });
+
+
+  // ---------- Scroll Mode (Reels) (Request 3) ----------
+  function openReelMode() {
+    const list = getFiltered();
+    if (list.length === 0) { showToast('No images to show'); return; }
+    
+    const container = document.getElementById('reelContainer');
+    container.innerHTML = list.map(p => `
+      <div class="reel-item">
+        <img src="${escapeAttr(p.url)}" loading="lazy">
+        <div class="reel-tags">
+          ${p.tags.map(t => `<span class="overlay-tag" style="background:rgba(255,255,255,0.9); font-size: 12px; padding: 6px 14px;">${escapeHtml(t)}</span>`).join('')}
+        </div>
+      </div>
+    `).join('');
+    document.getElementById('reelOverlay').classList.add('show');
+  }
+  document.getElementById('reelBtn').addEventListener('click', openReelMode);
+  document.getElementById('reelClose').addEventListener('click', () => document.getElementById('reelOverlay').classList.remove('show'));
+
+  // ---------- Swiping between tags (Request 4) ----------
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  document.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+  }, {passive: true});
+
+  document.addEventListener('touchend', e => {
+    // Disable swiping tags if any overlay is active
+    if (document.getElementById('modalBg').classList.contains('show') || 
+        document.getElementById('lightboxBg').classList.contains('show') || 
+        document.getElementById('reelOverlay').classList.contains('show') || 
+        document.getElementById('settingsModal').classList.contains('show')) return;
+
+    const touchEndX = e.changedTouches[0].screenX;
+    const touchEndY = e.changedTouches[0].screenY;
+    const dx = touchEndX - touchStartX;
+    const dy = touchEndY - touchStartY;
+
+    // Detect horizontal swipe
+    if (Math.abs(dx) > 70 && Math.abs(dy) < 50) {
+      handleTagSwipe(dx < 0 ? 1 : -1); // left swipe means next tag (+1)
+    }
+  }, {passive: true});
+
+  function handleTagSwipe(dir) {
+    const tagsList = [''].concat(allTags().map(t=>t[0]));
+    const currIdx = tagsList.indexOf(activeTagFilter || '');
+    let nextIdx = currIdx + dir;
+    
+    if (nextIdx < 0) nextIdx = tagsList.length - 1;
+    if (nextIdx >= tagsList.length) nextIdx = 0;
+    
+    const nextTag = tagsList[nextIdx];
+    activeTagFilter = nextTag === '' ? null : nextTag;
+    
+    // Scroll tagbar so the active tag is somewhat visible
+    const chip = document.querySelector(`.tag-chip[data-tag="${escapeAttr(nextTag)}"]`);
+    if(chip) chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+
+    render();
+    showToast(activeTagFilter ? `Tag: ${activeTagFilter}` : 'All images');
+  }
+
+  // ---------- Select mode ----------
+  const selectBtn = document.getElementById('selectModeBtn');
+  function enterSelectMode(toggleOff) {
+    selectMode = toggleOff ? !selectMode : true;
+    if (!selectMode) selectedIds.clear();
+    selectBtn.classList.toggle('active', selectMode);
+    render();
+  }
+  selectBtn.addEventListener('click', () => enterSelectMode(true));
+  document.getElementById('bulkCancel').addEventListener('click', () => { selectMode = false; selectedIds.clear(); selectBtn.classList.remove('active'); render(); });
+  document.getElementById('bulkDelete').addEventListener('click', () => {
+    if (selectedIds.size === 0) return;
+    const n = selectedIds.size;
+    if (!confirm(`Delete ${n} selected ${n === 1 ? 'pin' : 'pins'}? This cannot be undone.`)) return;
+    pins = pins.filter(p => !selectedIds.has(p.id));
+    selectedIds.clear(); selectMode = false; selectBtn.classList.remove('active');
+    saveDB(); render(); showToast(n + (n===1?' pin deleted':' pins deleted'));
+  });
+
+  function updateBulkBar() {
+    const bar = document.getElementById('bulkBar');
+    document.getElementById('bulkCount').textContent = selectedIds.size;
+    bar.classList.toggle('show', selectMode || selectedIds.size > 0);
+  }
+
+  // ---------- Search ----------
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    searchTerm = e.target.value.trim();
+    render();
+  });
+
+  // ---------- Modal: add/edit ----------
+  const modalBg = document.getElementById('modalBg');
+  const urlInput = document.getElementById('urlInput');
+  const tagInput = document.getElementById('tagInput');
+  const tagInputRow = document.getElementById('tagInputRow');
+  const previewBox = document.getElementById('previewBox');
+  const urlErr = document.getElementById('urlErr');
+
+  function openAddModal() {
+    editingId = null; currentTags = []; urlInput.value = '';
+    document.getElementById('modalTitle').textContent = 'Add a pin';
+    document.getElementById('saveBtn').textContent = 'Save Pin';
+    renderTagInputs(); renderPreview(''); renderSuggestChips();
+    modalBg.classList.add('show');
+    setTimeout(()=>urlInput.focus(), 50);
+  }
+
+  function openEditModal(id) {
+    const p = pins.find(x => x.id === id);
+    if (!p) return;
+    editingId = id; currentTags = p.tags.slice(); urlInput.value = p.url;
+    document.getElementById('modalTitle').textContent = 'Edit pin';
+    document.getElementById('saveBtn').textContent = 'Save Changes';
+    renderTagInputs(); renderPreview(p.url); renderSuggestChips();
+    modalBg.classList.add('show');
+  }
+
+  function closeModal() { modalBg.classList.remove('show'); urlErr.style.display = 'none'; }
+
+  document.getElementById('addBtn').addEventListener('click', openAddModal);
+  document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+  document.getElementById('cancelBtn').addEventListener('click', closeModal);
+  modalBg.addEventListener('click', (e) => { if (e.target === modalBg) closeModal(); });
+
+  urlInput.addEventListener('input', () => {
+    urlErr.style.display = 'none';
+    renderPreview(urlInput.value.trim());
+  });
+
+  function renderPreview(url) {
+    if (!url) { previewBox.innerHTML = '<div class="ph">Image preview appears here</div>'; return; }
+    previewBox.innerHTML = `<img src="${escapeAttr(url)}" onerror="this.parentElement.innerHTML='<div class=&quot;ph&quot;>Couldn\'t load preview — check the URL</div>'">`;
+  }
+
+  function renderTagInputs() {
+    tagInputRow.innerHTML = '';
+    currentTags.forEach(t => {
+      const pill = document.createElement('span'); pill.className = 'tag-pill';
+      pill.innerHTML = `${escapeHtml(t)} <button data-tag="${escapeAttr(t)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`;
+      pill.querySelector('button').addEventListener('click', () => { currentTags = currentTags.filter(x => x !== t); renderTagInputs(); });
+      tagInputRow.appendChild(pill);
+    });
+    tagInputRow.appendChild(tagInput);
+    tagInput.value = ''; tagInput.focus();
+  }
+
+  tagInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTagFromInput(); } 
+    else if (e.key === 'Backspace' && tagInput.value === '' && currentTags.length) { currentTags.pop(); renderTagInputs(); }
+  });
+  function addTagFromInput() {
+    const v = tagInput.value.trim().toLowerCase().replace(/\s+/g,' ');
+    if (v && !currentTags.includes(v)) currentTags.push(v);
+    renderTagInputs();
+  }
+
+  function renderSuggestChips() {
+    const row = document.getElementById('suggestRow');
+    const tags = allTags().map(t=>t[0]).filter(t => !currentTags.includes(t)).slice(0,8);
+    if (tags.length === 0) { row.innerHTML = ''; return; }
+    row.innerHTML = tags.map(t => `<span class="suggest-chip" data-tag="${escapeAttr(t)}">+ ${escapeHtml(t)}</span>`).join('');
+    row.querySelectorAll('.suggest-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const t = chip.getAttribute('data-tag');
+        if (!currentTags.includes(t)) currentTags.push(t);
+        renderTagInputs(); renderSuggestChips();
+      });
+    });
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', () => {
+    addTagFromInput();
+    const url = urlInput.value.trim();
+    if (!url) { urlErr.textContent = 'Please paste an image URL.'; urlErr.style.display = 'block'; urlInput.focus(); return; }
+    if (currentTags.length === 0) currentTags.push('untagged');
+    
+    if (editingId) {
+      const p = pins.find(x => x.id === editingId);
+      if (p) { p.url = url; p.tags = currentTags.slice(); }
+      showToast('Pin updated');
+    } else {
+      pins.unshift({ id: cid(), url, tags: currentTags.slice(), pinned: false, createdAt: Date.now() });
+      showToast('Pin added');
+    }
+    saveDB(); closeModal(); render();
+  });
+
+  // ---------- Settings Modal (Request 6) ----------
+  const settingsModal = document.getElementById('settingsModal');
+  document.getElementById('settingsBtn').addEventListener('click', () => settingsModal.classList.add('show'));
+  document.getElementById('settingsCloseBtn').addEventListener('click', () => settingsModal.classList.remove('show'));
+  settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) settingsModal.classList.remove('show'); });
+
+  // Export
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(pins));
+    const dlAnchorElem = document.createElement('a');
+    dlAnchorElem.setAttribute("href", dataStr);
+    dlAnchorElem.setAttribute("download", "vision_board_backup.json");
+    dlAnchorElem.click();
+    showToast('Backup downloaded');
+  });
+
+  // Import
+  document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+  document.getElementById('importFile').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const parsed = JSON.parse(ev.target.result);
+        if(Array.isArray(parsed)) {
+          pins = parsed;
+          saveDB(); render();
+          settingsModal.classList.remove('show');
+          showToast('Data imported successfully!');
+        } else { throw new Error('Invalid structure'); }
+      } catch(err) { showToast('Invalid backup file'); }
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // Reset input
+  });
+
+  // Reset Data
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    if(confirm("Are you ABSOLUTELY sure you want to delete all your pins?\nThis action cannot be undone.")) {
+      pins = [];
+      saveDB(); render();
+      settingsModal.classList.remove('show');
+      showToast('App data reset');
+    }
+  });
+
+
+  // ---------- Toast ----------
+  let toastTimer = null;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+  }
+
+  // ---------- Helpers ----------
+  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function escapeAttr(s) { return escapeHtml(s); }
+
+  // ---------- Init ----------
+  initTheme();
+  await initDB();
+  await loadDB();
+  render();
+
+})();
+</script>
+
+<script>
+  // ---------- PWA: Service Worker registration ----------
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then((reg) => {
+          // Check for an updated service worker whenever the page loads,
+          // so a new CACHE_VERSION in sw.js gets picked up promptly.
+          reg.update();
+        })
+        .catch((err) => console.warn('Service worker registration failed:', err));
+    });
+  }
+</script>
+</body>
+</html>
